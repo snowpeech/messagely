@@ -1,7 +1,6 @@
 const db = require("../db");
 const User = require("../models/user");
 const Message = require("../models/message");
-const { BCRPT_WORK_FACTOR } = require("../config");
 
 describe("Test Message class", function () {
   beforeEach(async function () {

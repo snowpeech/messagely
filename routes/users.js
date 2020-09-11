@@ -1,6 +1,6 @@
 const Router = require("express").Router;
 const router = new Router();
-
+const { ensureCorrectUser, ensureLoggedIn } = require("../middleware/auth");
 const User = require("../models/user");
 const ExpressError = require("../expressError");
 
@@ -19,7 +19,7 @@ router.get("/", async (req, res, next) => {
 /** GET /:username - get detail of users.
  * => {user: {username, first_name, last_name, phone, join_at, last_login_at}}
  **/
-router.get("/:username", async (req, res, next) => {
+router.get("/:username", ensureCorrectUser, async (req, res, next) => {
   try {
     const { username } = req.params;
     const user = await User.get(username);
@@ -36,7 +36,7 @@ router.get("/:username", async (req, res, next) => {
  *                 read_at,
  *                 from_user: {username, first_name, last_name, phone}}, ...]}
  **/
-router.get("/:username/to", async (req, res, next) => {
+router.get("/:username/to", ensureCorrectUser, async (req, res, next) => {
   try {
     const { username } = req.params;
     const messages = await User.messagesTo(username);
