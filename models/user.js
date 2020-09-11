@@ -2,6 +2,7 @@
 const db = require("../db");
 const bcrypt = require("bcrypt");
 const ExpressError = require("../expressError");
+const { BCRYPT_WORK_FACTOR } = require("../config");
 
 /** User of the site. */
 
@@ -10,17 +11,18 @@ class User {
    *    {username, password, first_name, last_name, phone}
    */
 
-  static async register({ username, password, first_name, last_name, phone }) {
+  static async register(username, password, first_name, last_name, phone) {
     let hashedPswd = await bcrypt.hash(password, BCRYPT_WORK_FACTOR);
+
+    debugger;
     const result = await db.query(
       `INSERT INTO users 
-      (username,password,first_name, last_name, phone, join_at)
-      VALUES ($1, $2, $3, $4, $5,current_timestamp) 
+      (username,password,first_name, last_name, phone, join_at, last_login_at)
+      VALUES ($1, $2, $3, $4, $5,current_timestamp,current_timestamp) 
       RETURNING username, password, first_name, last_name, phone`,
-      [username, hashedPswd, first_name, last_name, phone, current_timestamp]
+      [username, hashedPswd, first_name, last_name, phone]
     );
-    console.log(result.rows[0]);
-    //should I be returning a User instance?
+
     return result.rows[0];
   }
 
@@ -54,10 +56,8 @@ class User {
 
   static async all() {
     const results = await db.query(
-      `SELECT id, 
-           first_name AS "firstName",  
-           last_name AS "lastName", 
-           phone
+      `SELECT username, first_name, 
+      last_name, phone
          FROM users
          ORDER BY last_name, first_name`
     );
@@ -100,9 +100,12 @@ class User {
   static async messagesFrom(username) {
     //join table needed and then map messages out.
     const results = await db.query(
-      `SELECT m.id, m.to_username, m.body, m.sent_at, m.read_at, user.first_name, user.last_name, user.phone
+      `SELECT 
+      m.id, m.to_username, 
+      m.body, m.sent_at, 
+      m.read_at, users.first_name, users.last_name, users.phone
        FROM messages AS m 
-       JOIN users ON messages.to_username=users.username 
+       JOIN users ON m.to_username=users.username 
        WHERE from_username = $1`,
       [username]
     );
@@ -130,16 +133,25 @@ class User {
    */
   static async messagesTo(username) {
     const results = await db.query(
-      `SELECT m.id, m.from_username, m.body, m.sent_at, m.read_at, user.first_name, user.last_name, user.phone
+      `SELECT m.id, 
+      m.from_username, 
+      m.body, 
+      m.sent_at, 
+      m.read_at, 
+      u.first_name, 
+      u.last_name, 
+      u.phone
        FROM messages AS m 
-       JOIN users ON messages.to_username=users.username 
-       WHERE from_username = $1`,
+       JOIN users AS u
+       ON m.from_username = u.username 
+       WHERE m.to_username = $1`,
       [username]
     );
+
     const messages = results.rows;
     return messages.map((m) => ({
       id: m.id,
-      to_user: {
+      from_user: {
         username: m.from_username,
         first_name: m.first_name,
         last_name: m.last_name,
