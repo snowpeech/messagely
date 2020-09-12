@@ -13,7 +13,7 @@ class User {
 
   static async register({ username, password, first_name, last_name, phone }) {
     // let hashedPswd = await bcrypt.hash(password, BCRYPT_WORK_FACTOR);
-    console.log(password);
+
     let hashedPswd = await bcrypt.hash(password, BCRYPT_WORK_FACTOR);
     const result = await db.query(
       `INSERT INTO users 
@@ -32,14 +32,16 @@ class User {
       "SELECT password FROM users WHERE username = $1",
       [username]
     );
-    const user = result.rows[0];
+    let user = result.rows[0];
+    return result && (await bcrypt.compare(password, user.password));
+    // const user = result.rows[0];
 
-    if (user) {
-      if ((await bcrypt.compare(password, user.password)) === true) {
-        return true;
-      }
-    }
-    throw new ExpressError("Invalid username/password", 400);
+    // if (user) {
+    //   if ((await bcrypt.compare(password, user.password)) === true) {
+    //     return true;
+    //   }
+    // }
+    // throw new ExpressError("Invalid username/password", 400);
   }
 
   /** Update last_login_at for user */
