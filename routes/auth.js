@@ -35,7 +35,7 @@ const ExpressError = require("../expressError");
 //   }
 // });
 /////////////////////////////////////////////////////////////////////////////////
-//////////////KELLY//////////////////////////////////////////////////////////////
+//////////////KELLY::////////////////////////////////////////////////////////////
 /** POST /login - login: {username, password} => {token} **/
 router.post("/login", async function (req, res, next) {
   try {
@@ -64,23 +64,13 @@ router.post("/register", async (req, res, next) => {
   // await response. get token if successful. get error if not
   // if successful. also update last login time
   try {
-    const { username, password, first_name, last_name, phone } = req.body;
-
-    debugger;
+    let { username } = req.body;
     const user = await User.get(username);
     if (!user) {
-      const newUser = await User.register(
-        username,
-        password,
-        first_name,
-        last_name,
-        phone
-      );
-      // const newUser = await User.register(req.body);
+      const newUser = await User.register(req.body);
       await User.updateLoginTimestamp(username);
 
       //get token:
-
       let token = jwt.sign({ username }, SECRET_KEY);
       return res.json({ token });
     }
