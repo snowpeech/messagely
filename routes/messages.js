@@ -65,7 +65,7 @@ router.get("/:id/read", ensureLoggedIn, async (req, res, next) => {
   try {
     const { id } = req.params;
     let message = await Message.get(id);
-    //check user is currently logged in and either a recipient or sender
+    //check user is currently logged in is recipient 
     let { username } = req.user;
     if (username != message.to_user.username) {
       throw new ExpressError("Not authorized", 401);
